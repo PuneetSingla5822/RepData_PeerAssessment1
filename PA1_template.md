@@ -22,27 +22,27 @@ The dataset is stored in a comma-separated-value (CSV) file and there are a tota
 
 ## Loading and preprocessing the data
 
-``` {r message = FALSE, warning = FALSE, echo = FALSE}
-library(dplyr)
-library(ggplot2)
-```
+
 
 Since the data is already provided in the github repository, I am not going to download the data again.
 
-``` {r Readdata, echo = TRUE}
+
+```r
 ## Unzip the activity data file & read the data
 unzip("activity.zip")
 actv <- read.csv("activity.csv", stringsAsFactors = FALSE)
 ```
 
-``` {r Preprocessing, echo = TRUE}
+
+```r
 ## Converting date from character to date format
 actv$date <- as.Date(actv$date)
 ```
 
 ## What is mean total number of steps taken per day?
 
-``` {r Histogram, echo = TRUE}
+
+```r
 ## Calculate Total Steps in each day
 ## Ignoring the missing values in the activity data
 actv_dly <- group_by(actv, date) %>% summarize(ttl_steps = sum(steps, na.rm = TRUE))
@@ -52,18 +52,22 @@ hist(actv_dly$ttl_steps, xlab = "Total Daily Steps", ylab = "Number of Days",
      main = "Total number of steps taken each day")
 ```
 
-``` {r Mean&Median, echo = TRUE, results = "hide"}
+![](PA1_template_files/figure-html/Histogram-1.png)<!-- -->
+
+
+```r
 ## Calculate Mean and Median of steps taken each day
 mean_actv_dly <- mean(actv_dly$ttl_steps)
 median_actv_dly <- median(actv_dly$ttl_steps)
 ```
 
-Mean of number of steps taken each day **`r mean_actv_dly`**  
-Median of number of steps taken each day **`r median_actv_dly`**
+Mean of number of steps taken each day **9354.2295082**  
+Median of number of steps taken each day **10395**
 
 ## What is the average daily activity pattern?
 
-``` {r TimeSeries, echo = TRUE}
+
+```r
 ## Calculate Average Steps in each interval
 ## Ignoring the missing values in the activity data
 actv_intvl <- group_by(actv, interval) %>% summarize(avg_steps = mean(steps, na.rm = TRUE))
@@ -73,32 +77,38 @@ plot(actv_intvl$interval, actv_intvl$avg_steps, type = "l", xlab = "Time Interva
      main = "Average number of steps taken in each interval")
 ```
 
-``` {r MaxStepInterval, echo = TRUE, results = "hide"}
+![](PA1_template_files/figure-html/TimeSeries-1.png)<!-- -->
+
+
+```r
 ## Calculate 5-minute interval that, on average, contains the maximum number of steps
 actv_intvl_max <- actv_intvl[actv_intvl$avg_steps==max(actv_intvl$avg_steps),1]
 ```
 
-5-minute interval that, on average, contains the maximum number of steps is **`r actv_intvl_max`**
+5-minute interval that, on average, contains the maximum number of steps is **835**
 
 ## Imputing missing values
 
-``` {r MissingData, echo = TRUE, results = "hide"}
+
+```r
 ## Calculate total number of missing values
 actv_na <- sum(is.na(actv$steps))
 ```
 
-Total number of missing values are **`r actv_na`**
+Total number of missing values are **2304**
 
 Strategy used to impute missing values: **Mean for that 5-minute interval**
 
-``` {r Impute, echo=TRUE}
+
+```r
 ## Create a new dataset that is equal to the original dataset but with the missing data filled in
 new_actv <- merge(actv, actv_intvl, by = "interval")
 new_actv[is.na(new_actv$steps),2] <- new_actv[is.na(new_actv$steps), 4]
 new_actv <- new_actv[,1:3]
 ```
 
-``` {r ImputedHistogram, echo = TRUE}
+
+```r
 ## Calculate Total Steps in each day for imputed data frame
 new_actv_dly <- group_by(new_actv, date) %>% summarize(ttl_steps = sum(steps))
 
@@ -107,20 +117,24 @@ hist(new_actv_dly$ttl_steps, xlab = "Total Daily Steps", ylab = "Number of Days"
      main = "Total number of steps taken each day for imputed data frame")
 ```
 
-``` {r ImputedMean&Median, echo = TRUE, results = "hide"}
+![](PA1_template_files/figure-html/ImputedHistogram-1.png)<!-- -->
+
+
+```r
 ## Calculate Mean and Median of steps taken each day for imputed data frame
 mean_new_actv_dly <- mean(new_actv_dly$ttl_steps)
 median_new_actv_dly <- median(new_actv_dly$ttl_steps)
 ```
 
-Mean of number of steps taken each day for imputed data frame **`r format(mean_new_actv_dly, scientific = FALSE)`**  
-Median of number of steps taken each day for imputed data frame **`r format(median_new_actv_dly, , scientific = FALSE)`**
+Mean of number of steps taken each day for imputed data frame **10766.19**  
+Median of number of steps taken each day for imputed data frame **10766.19**
 
-Impact of imputation, calculated as percentage increase in total daily steps, is **`r round((1-sum(actv_dly$ttl_steps)/sum(new_actv_dly$ttl_steps))*100,1)`** percent
+Impact of imputation, calculated as percentage increase in total daily steps, is **13.1** percent
 
 ## Are there differences in activity patterns between weekdays and weekends?
 
-``` {r Patterns, echo=TRUE, message = FALSE}
+
+```r
 ## Create a new factor variable in the dataset with two levels – “weekday” and “weekend”
 new_actv$wkdy <- weekdays(new_actv$date)
 new_actv$is_wknd_flg <- new_actv$wkdy %in% c("Saturday","Sunday")
@@ -134,5 +148,6 @@ new_actv_intvl <- group_by(new_actv, interval, dy_flg) %>% summarize(avg_steps =
 ## Panel plot containing a time series plot of the 5-minute interval (x-axis) and the average number of steps taken
 ## averaged across all weekday days or weekend days (y-axis)
 ggplot(data = new_actv_intvl, aes(interval, avg_steps)) + geom_line() + facet_grid(.~dy_flg) + xlab("Time Interval") + ylab("Average Steps") + ggtitle("Average number of steps taken per 5-min across weekdays and weekends") + theme_bw()
-
 ```
+
+![](PA1_template_files/figure-html/Patterns-1.png)<!-- -->
